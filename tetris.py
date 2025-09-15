@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(layout="centered")
-st.title("Tetris in Streamlit 🎮 (Line Clear Cooldown)")
+st.title("Tetris in Streamlit 🎮 (Double-Tap Rotate + Line Clear Cooldown)")
 
 # Instructions
 st.markdown("""
@@ -9,7 +9,7 @@ st.markdown("""
 - Move Left: `A` (or swipe/drag left)  
 - Move Right: `D` (or swipe/drag right)  
 - Soft Drop: `S` (or drag down)  
-- Rotate: `W` (or tap)  
+- Rotate: `W` (or **double-tap**)  
 - Pause / Resume: `Space` (or button)  
 - Restart: `R` (or button)  
 
@@ -330,10 +330,11 @@ document.addEventListener('keydown', event => {{
     else if (event.key === 'w' || event.key === 'W') safeRotate(1);
 }});
 
-// Touch controls
+// Touch controls with double-tap rotate
 let dragStartX = 0;
 let dragStartY = 0;
 let isDragging = false;
+let lastTapTime = 0;
 
 canvas.addEventListener("touchstart", (e) => {{
     dragStartX = e.touches[0].clientX;
@@ -364,8 +365,16 @@ canvas.addEventListener("touchend", (e) => {{
     isDragging = false;
     let dx = e.changedTouches[0].clientX - dragStartX;
     let dy = e.changedTouches[0].clientY - dragStartY;
+
+    // Double-tap detection for rotate
     if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {{
-        safeRotate(1);
+        let currentTime = Date.now();
+        if (currentTime - lastTapTime < 250) {{
+            safeRotate(1);
+            lastTapTime = 0;
+        }} else {{
+            lastTapTime = currentTime;
+        }}
     }}
 }}, false);
 
