@@ -1,23 +1,24 @@
 import streamlit as st
 
 st.set_page_config(layout="centered")
-st.title("Tetris in Streamlit 🎮")
+st.title("Tetris in Streamlit 🎮 (with Mobile Controls)")
 
 # Instructions
 st.markdown("""
-**Instructions (Desktop):**  
-- Move Left: `A`  
-- Move Right: `D`  
-- Soft Drop: `S`  
-- Rotate: `W`  
-- Pause / Resume: `Space`  
-- Restart: `R`  
+**Instructions:**  
+- Move Left: `A` (or swipe/drag left)  
+- Move Right: `D` (or swipe/drag right)  
+- Soft Drop: `S` (or drag down)  
+- Rotate: `W` (or tap)  
+- Pause / Resume: `Space` (or button)  
+- Restart: `R` (or button)  
 
-**Instructions (Mobile):**  
-- **Drag Left / Right** → Move  
-- **Drag Down** → Drop faster  
-- **Tap** → Rotate  
-- Or use on-screen buttons  
+**Difficulty levels:**  
+- Easy → slow blocks  
+- Normal → medium speed  
+- Hard → faster  
+- Demon → very fast  
+- Impossible → extremely fast (almost instant!)  
 
 **Goal:** Clear lines to earn points. The game ends if blocks reach the top.
 """)
@@ -31,10 +32,11 @@ difficulty_speeds = {
     "Normal": 600,
     "Hard": 300,
     "Demon": 100,
-    "Impossible": 0.001
+    "Impossible": 0.001  # Almost instant
 }
 drop_speed = difficulty_speeds[difficulty]
 
+# Full HTML + JS
 html_code = f"""
 <style>
   body {{ background: #111; color: #fff; font-family: monospace; text-align: center; }}
@@ -50,8 +52,12 @@ html_code = f"""
     color: white;
   }}
   button:active {{ background: #777; }}
-  #controls {{ margin-top: 10px; }}
-  #controls button {{ width: 70px; height: 70px; font-size: 22px; }}
+  #sideControls {{
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }}
   #gameOver {{ display: none; color: red; font-size: 24px; margin-top: 10px; font-weight: bold; }}
   #scoreBoard {{ font-size: 20px; margin-bottom: 5px; }}
 </style>
@@ -65,16 +71,12 @@ html_code = f"""
 </div>
 <div id="gameOver">YOU LOSE 😵</div>
 
-<!-- On-screen buttons -->
-<div id="controls">
-  <div>
-    <button onclick="playerRotate(1)">⟳</button>
-  </div>
-  <div>
-    <button onclick="playerMove(-1)">⬅</button>
-    <button onclick="playerDrop()">⬇</button>
-    <button onclick="playerMove(1)">➡</button>
-  </div>
+<!-- Side Buttons -->
+<div id="sideControls">
+  <button onclick="safeRotate(1)">⟳ Rotate</button>
+  <button onclick="safeMove(-1)">⬅</button>
+  <button onclick="safeDrop()">⬇</button>
+  <button onclick="safeMove(1)">➡</button>
 </div>
 
 <script>
@@ -86,6 +88,37 @@ let paused = false;
 let gameOver = false;
 let score = 0;
 let lines = 0;
+
+// --- Action cooldowns ---
+let lastActionTime = 0;
+let actionDelay = 120; // ms between moves/rotates
+
+function canAct() {{
+    return Date.now() - lastActionTime > actionDelay;
+}}
+function recordAction() {{
+    lastActionTime = Date.now();
+}}
+
+// Safe wrappers
+function safeMove(dir) {{
+    if (canAct()) {{
+        playerMove(dir);
+        recordAction();
+    }}
+}}
+function safeDrop() {{
+    if (canAct()) {{
+        playerDrop();
+        recordAction();
+    }}
+}}
+function safeRotate(dir) {{
+    if (canAct()) {{
+        playerRotate(dir);
+        recordAction();
+    }}
+}}
 
 function updateScore() {{
     document.getElementById("scoreBoard").innerText = `Score: ${{score}} | Lines: ${{lines}}`;
@@ -173,7 +206,7 @@ function draw() {{
     context.fillStyle = '#222';
     context.fillRect(0,0,canvas.width,canvas.height);
 
-    // Grid
+    // Draw grid
     context.strokeStyle = '#444';
     for (let x = 0; x <= 12; x++) {{
         context.beginPath();
@@ -279,7 +312,6 @@ function update(time=0) {{
     requestAnimationFrame(update);
 }}
 
-// Keyboard controls
 document.addEventListener('keydown', event => {{
     if (event.code === 'Space') {{
         togglePause();
@@ -291,13 +323,13 @@ document.addEventListener('keydown', event => {{
         return;
     }}
     if (paused || gameOver) return;
-    if (event.key === 'a' || event.key === 'A') playerMove(-1);
-    else if (event.key === 'd' || event.key === 'D') playerMove(1);
-    else if (event.key === 's' || event.key === 'S') playerDrop();
-    else if (event.key === 'w' || event.key === 'W') playerRotate(1);
+    if (event.key === 'a' || event.key === 'A') safeMove(-1);
+    else if (event.key === 'd' || event.key === 'D') safeMove(1);
+    else if (event.key === 's' || event.key === 'S') safeDrop();
+    else if (event.key === 'w' || event.key === 'W') safeRotate(1);
 }});
 
-// Touch drag + tap
+// --- Touchscreen drag controls ---
 let dragStartX = 0;
 let dragStartY = 0;
 let isDragging = false;
@@ -317,13 +349,12 @@ canvas.addEventListener("touchmove", (e) => {{
     let dy = currentY - dragStartY;
 
     if (Math.abs(dx) > 15) {{
-        if (dx > 0) playerMove(1);
-        else playerMove(-1);
+        if (dx > 0) safeMove(1);
+        else safeMove(-1);
         dragStartX = currentX;
     }}
-
     if (dy > 20) {{
-        playerDrop();
+        safeDrop();
         dragStartY = currentY;
     }}
 }}, false);
@@ -333,7 +364,7 @@ canvas.addEventListener("touchend", (e) => {{
     let dx = e.changedTouches[0].clientX - dragStartX;
     let dy = e.changedTouches[0].clientY - dragStartY;
     if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {{
-        playerRotate(1);
+        safeRotate(1);
     }}
 }}, false);
 
