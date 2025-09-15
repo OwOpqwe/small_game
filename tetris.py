@@ -5,12 +5,19 @@ st.title("Tetris in Streamlit 🎮")
 
 # Instructions
 st.markdown("""
-**Instructions:**  
-- **Keyboard (desktop):**  
-  - Left: `A` | Right: `D` | Soft Drop: `S` | Rotate: `W`  
-  - Pause/Resume: `Space` | Restart: `R`  
-- **Mobile (phone/tablet):**  
-  - Use the on-screen buttons on the **sides** of the game.  
+**Instructions (Desktop):**  
+- Move Left: `A`  
+- Move Right: `D`  
+- Soft Drop: `S`  
+- Rotate: `W`  
+- Pause / Resume: `Space`  
+- Restart: `R`  
+
+**Instructions (Mobile):**  
+- **Swipe Left / Right** → Move  
+- **Swipe Down** → Drop  
+- **Tap** → Rotate  
+- Or use on-screen buttons  
 
 **Difficulty levels:**  
 - Easy → slow blocks  
@@ -27,86 +34,56 @@ difficulty = st.selectbox("Choose Difficulty", ["Easy", "Normal", "Hard", "Demon
 
 # Drop intervals in milliseconds
 difficulty_speeds = {
-    "Easy": 1000,
-    "Normal": 600,
-    "Hard": 300,
-    "Demon": 100,
-    "Impossible": 0.001  # Almost instant
+    "Easy": 1000,      
+    "Normal": 600,     
+    "Hard": 300,       
+    "Demon": 100,      
+    "Impossible": 0.001   # Almost instant
 }
 drop_speed = difficulty_speeds[difficulty]
 
-# Full HTML + JS code with SIDE controls
+# Full HTML + JS code
 html_code = f"""
 <style>
   body {{ background: #111; color: #fff; font-family: monospace; text-align: center; }}
-
-  #game-wrapper {{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    margin-top: 10px;
-  }}
-
-  canvas {{
-    background: #222;
-    display: block;
-    width: 240px;
-    height: 400px;
-  }}
-
+  canvas {{ background: #222; display: block; margin: 10px auto; touch-action: none; }}
   button {{
     margin: 6px;
-    padding: 16px 20px;
+    padding: 14px 20px;
     border: none;
-    border-radius: 10px;
-    font-size: 22px;
+    border-radius: 8px;
+    font-size: 18px;
     cursor: pointer;
-    font-weight: bold;
+    background: #444;
     color: white;
-    min-width: 60px;
-    min-height: 50px;
   }}
-  button:active {{ transform: scale(0.9); }}
-
-  #pauseBtn, #restartBtn {{ background: #c0392b; }} /* red */
-  #btn-left, #btn-right {{ background: #2980b9; }}   /* blue */
-  #btn-drop {{ background: #27ae60; }}   /* green */
-  #btn-rotate {{ background: #f1c40f; color: black; }} /* yellow */
-
-  #controls-left, #controls-right {{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }}
-
-  #scoreBoard {{ font-size: 20px; margin-bottom: 5px; }}
+  button:active {{ background: #777; }}
+  #controls {{ margin-top: 10px; }}
+  #controls button {{ width: 70px; height: 70px; font-size: 22px; }}
   #gameOver {{ display: none; color: red; font-size: 24px; margin-top: 10px; font-weight: bold; }}
+  #scoreBoard {{ font-size: 20px; margin-bottom: 5px; }}
 </style>
 
 <div id="scoreBoard">Score: 0 | Lines: 0</div>
+<canvas id="tetris" width="240" height="400"></canvas>
+<br>
+<div>
+  <button id="pauseBtn">⏯ Pause</button>
+  <button id="restartBtn">🔄 Restart</button>
+</div>
+<div id="gameOver">YOU LOSE 😵</div>
 
-<div id="game-wrapper">
-  <!-- Left controls -->
-  <div id="controls-left">
-    <button id="btn-left" onclick="playerMove(-1)">⬅</button>
-    <button id="btn-drop" onclick="playerDrop()">⬇</button>
-    <button id="btn-right" onclick="playerMove(1)">➡</button>
+<!-- On-screen controls -->
+<div id="controls">
+  <div>
+    <button onclick="playerRotate(1)">⟳</button>
   </div>
-
-  <!-- Game canvas -->
-  <canvas id="tetris" width="240" height="400"></canvas>
-
-  <!-- Right controls -->
-  <div id="controls-right">
-    <button id="btn-rotate" onclick="playerRotate(1)">⟳</button>
-    <button id="pauseBtn">⏯</button>
-    <button id="restartBtn">🔄</button>
+  <div>
+    <button onclick="playerMove(-1)">⬅</button>
+    <button onclick="playerDrop()">⬇</button>
+    <button onclick="playerMove(1)">➡</button>
   </div>
 </div>
-
-<div id="gameOver">YOU LOSE 😵</div>
 
 <script>
 const canvas = document.getElementById('tetris');
@@ -125,7 +102,7 @@ function updateScore() {{
 function togglePause() {{
     if (gameOver) return;
     paused = !paused;
-    document.getElementById("pauseBtn").innerText = paused ? "▶" : "⏯";
+    document.getElementById("pauseBtn").innerText = paused ? "▶ Resume" : "⏯ Pause";
 }}
 
 function restartGame() {{
@@ -137,7 +114,7 @@ function restartGame() {{
     lines = 0;
     updateScore();
     document.getElementById("gameOver").style.display = "none";
-    document.getElementById("pauseBtn").innerText = "⏯";
+    document.getElementById("pauseBtn").innerText = "⏯ Pause";
 }}
 
 document.getElementById("pauseBtn").addEventListener("click", togglePause);
@@ -204,7 +181,7 @@ function draw() {{
     context.fillStyle = '#222';
     context.fillRect(0,0,canvas.width,canvas.height);
 
-    // Draw grid
+    // Grid
     context.strokeStyle = '#444';
     for (let x = 0; x <= 12; x++) {{
         context.beginPath();
@@ -310,6 +287,7 @@ function update(time=0) {{
     requestAnimationFrame(update);
 }}
 
+// Keyboard controls
 document.addEventListener('keydown', event => {{
     if (event.code === 'Space') {{
         togglePause();
@@ -327,6 +305,37 @@ document.addEventListener('keydown', event => {{
     else if (event.key === 'w' || event.key === 'W') playerRotate(1);
 }});
 
+// Touchscreen swipe & tap
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
+
+canvas.addEventListener("touchstart", (e) => {{
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}}, false);
+
+canvas.addEventListener("touchend", (e) => {{
+    touchEndX = e.changedTouches[0].clientX;
+    touchEndY = e.changedTouches[0].clientY;
+
+    let dx = touchEndX - touchStartX;
+    let dy = touchEndY - touchStartY;
+
+    if (Math.abs(dx) > Math.abs(dy)) {{
+        // Horizontal swipe
+        if (dx > 30) playerMove(1);   // right
+        else if (dx < -30) playerMove(-1); // left
+    }} else {{
+        // Vertical or tap
+        if (dy > 30) playerDrop();   // swipe down
+        else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {{
+            playerRotate(1); // tap = rotate
+        }}
+    }}
+}}, false);
+
 const arena = createMatrix(12,20);
 const colors = [
     null,
@@ -339,5 +348,4 @@ update();
 </script>
 """
 
-st.components.v1.html(html_code, height=600)
- 
+st.components.v1.html(html_code, height=750)
