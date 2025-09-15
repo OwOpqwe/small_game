@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(layout="centered")
-st.title("Tetris in Streamlit 🎮 (with Mobile Controls)")
+st.title("Tetris in Streamlit 🎮 (Line Clear Cooldown)")
 
 # Instructions
 st.markdown("""
@@ -12,13 +12,6 @@ st.markdown("""
 - Rotate: `W` (or tap)  
 - Pause / Resume: `Space` (or button)  
 - Restart: `R` (or button)  
-
-**Difficulty levels:**  
-- Easy → slow blocks  
-- Normal → medium speed  
-- Hard → faster  
-- Demon → very fast  
-- Impossible → extremely fast (almost instant!)  
 
 **Goal:** Clear lines to earn points. The game ends if blocks reach the top.
 """)
@@ -32,11 +25,10 @@ difficulty_speeds = {
     "Normal": 600,
     "Hard": 300,
     "Demon": 100,
-    "Impossible": 0.001  # Almost instant
+    "Impossible": 0.001
 }
 drop_speed = difficulty_speeds[difficulty]
 
-# Full HTML + JS
 html_code = f"""
 <style>
   body {{ background: #111; color: #fff; font-family: monospace; text-align: center; }}
@@ -91,10 +83,11 @@ let lines = 0;
 
 // --- Action cooldowns ---
 let lastActionTime = 0;
-let actionDelay = 120; // ms between moves/rotates
+let actionDelay = 120; // normal move/rotate delay
+let lineClearCooldown = 0; // lock moves/rotate after clearing line
 
 function canAct() {{
-    return Date.now() - lastActionTime > actionDelay;
+    return lineClearCooldown <= 0 && (Date.now() - lastActionTime > actionDelay);
 }}
 function recordAction() {{
     lastActionTime = Date.now();
@@ -147,6 +140,7 @@ document.getElementById("restartBtn").addEventListener("click", restartGame);
 
 function arenaSweep() {{
     let rowCount = 1;
+    let linesCleared = 0;
     outer: for (let y = arena.length -1; y > 0; --y) {{
         for (let x = 0; x < arena[y].length; ++x) {{
             if (arena[y][x] === 0) continue outer;
@@ -157,8 +151,14 @@ function arenaSweep() {{
         score += rowCount*10;
         lines += 1;
         rowCount *= 2;
+        linesCleared++;
     }}
     updateScore();
+
+    if (linesCleared > 0) {{
+        lineClearCooldown = 300; // 300ms lock after clearing line
+        setTimeout(() => {{ lineClearCooldown = 0; }}, lineClearCooldown);
+    }}
 }}
 
 function collide(arena, player) {{
@@ -312,6 +312,7 @@ function update(time=0) {{
     requestAnimationFrame(update);
 }}
 
+// Keyboard controls
 document.addEventListener('keydown', event => {{
     if (event.code === 'Space') {{
         togglePause();
@@ -329,7 +330,7 @@ document.addEventListener('keydown', event => {{
     else if (event.key === 'w' || event.key === 'W') safeRotate(1);
 }});
 
-// --- Touchscreen drag controls ---
+// Touch controls
 let dragStartX = 0;
 let dragStartY = 0;
 let isDragging = false;
