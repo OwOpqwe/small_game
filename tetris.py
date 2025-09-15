@@ -6,12 +6,11 @@ st.title("Tetris in Streamlit 🎮")
 # Instructions
 st.markdown("""
 **Instructions:**  
-- Move Left: `A`  
-- Move Right: `D`  
-- Soft Drop: `S`  
-- Rotate: `W`  
-- Pause / Resume: `Space`  
-- Restart: `R`  
+- **Keyboard (desktop):**  
+  - Left: `A` | Right: `D` | Soft Drop: `S` | Rotate: `W`  
+  - Pause/Resume: `Space` | Restart: `R`  
+- **Mobile (phone/tablet):**  
+  - Use on-screen buttons below the game.  
 
 **Difficulty levels:**  
 - Easy → slow blocks  
@@ -28,49 +27,55 @@ difficulty = st.selectbox("Choose Difficulty", ["Easy", "Normal", "Hard", "Demon
 
 # Drop intervals in milliseconds
 difficulty_speeds = {
-    "Easy": 1000,      
-    "Normal": 600,     
-    "Hard": 300,       
-    "Demon": 100,      
-    "Impossible": 0.001   # Almost instant
+    "Easy": 1000,
+    "Normal": 600,
+    "Hard": 300,
+    "Demon": 100,
+    "Impossible": 0.001  # Almost instant
 }
 drop_speed = difficulty_speeds[difficulty]
 
-# Full HTML + JS code with score and grid
+# Full HTML + JS code with mobile controls
 html_code = f"""
 <style>
   body {{ background: #111; color: #fff; font-family: monospace; text-align: center; }}
-  canvas {{ background: #222; display: block; margin: 10px auto; }}
+  canvas {{ background: #222; display: block; margin: 10px auto; width: 90%; max-width: 300px; height: auto; }}
   button {{
-    margin: 10px;
-    padding: 10px 20px;
+    margin: 6px;
+    padding: 14px 20px;
     border: none;
-    border-radius: 6px;
-    font-size: 16px;
+    border-radius: 8px;
+    font-size: 18px;
     cursor: pointer;
     background: #444;
     color: white;
   }}
-  button:hover {{ background: #666; }}
-  #gameOver {{
-    display: none;
-    color: red;
-    font-size: 24px;
-    margin-top: 10px;
-    font-weight: bold;
-  }}
-  #scoreBoard {{
-    font-size: 20px;
-    margin-bottom: 5px;
-  }}
+  button:active {{ background: #777; }}
+  #controls {{ margin-top: 10px; }}
+  #gameOver {{ display: none; color: red; font-size: 24px; margin-top: 10px; font-weight: bold; }}
+  #scoreBoard {{ font-size: 20px; margin-bottom: 5px; }}
 </style>
 
 <div id="scoreBoard">Score: 0 | Lines: 0</div>
 <canvas id="tetris" width="240" height="400"></canvas>
 <br>
-<button id="pauseBtn">⏯ Pause</button>
-<button id="restartBtn">🔄 Restart</button>
+<div>
+  <button id="pauseBtn">⏯ Pause</button>
+  <button id="restartBtn">🔄 Restart</button>
+</div>
 <div id="gameOver">YOU LOSE 😵</div>
+
+<!-- Mobile controls -->
+<div id="controls">
+  <div>
+    <button onclick="playerRotate(1)">⟳ Rotate</button>
+  </div>
+  <div>
+    <button onclick="playerMove(-1)">⬅</button>
+    <button onclick="playerDrop()">⬇</button>
+    <button onclick="playerMove(1)">➡</button>
+  </div>
+</div>
 
 <script>
 const canvas = document.getElementById('tetris');
@@ -303,4 +308,4 @@ update();
 </script>
 """
 
-st.components.v1.html(html_code, height=650)
+st.components.v1.html(html_code, height=800)
