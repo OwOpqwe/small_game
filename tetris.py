@@ -1,7 +1,7 @@
 import streamlit as st
 
 st.set_page_config(layout="centered")
-st.title("Tetris in Streamlit 🎮 (Bloky Blocks + Grid + Mobile Controls)")
+st.title("Tetris")
 
 st.markdown("""
 **Instructions:**  
