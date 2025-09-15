@@ -10,7 +10,7 @@ st.markdown("""
   - Left: `A` | Right: `D` | Soft Drop: `S` | Rotate: `W`  
   - Pause/Resume: `Space` | Restart: `R`  
 - **Mobile (phone/tablet):**  
-  - Use on-screen buttons below the game.  
+  - Use the on-screen buttons on the **sides** of the game.  
 
 **Difficulty levels:**  
 - Easy → slow blocks  
@@ -35,47 +35,78 @@ difficulty_speeds = {
 }
 drop_speed = difficulty_speeds[difficulty]
 
-# Full HTML + JS code with mobile controls
+# Full HTML + JS code with SIDE controls
 html_code = f"""
 <style>
   body {{ background: #111; color: #fff; font-family: monospace; text-align: center; }}
-  canvas {{ background: #222; display: block; margin: 10px auto; width: 90%; max-width: 300px; height: auto; }}
+
+  #game-wrapper {{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+  }}
+
+  canvas {{
+    background: #222;
+    display: block;
+    width: 240px;
+    height: 400px;
+  }}
+
   button {{
     margin: 6px;
-    padding: 14px 20px;
+    padding: 16px 20px;
     border: none;
-    border-radius: 8px;
-    font-size: 18px;
+    border-radius: 10px;
+    font-size: 22px;
     cursor: pointer;
-    background: #444;
+    font-weight: bold;
     color: white;
+    min-width: 60px;
+    min-height: 50px;
   }}
-  button:active {{ background: #777; }}
-  #controls {{ margin-top: 10px; }}
-  #gameOver {{ display: none; color: red; font-size: 24px; margin-top: 10px; font-weight: bold; }}
+  button:active {{ transform: scale(0.9); }}
+
+  #pauseBtn, #restartBtn {{ background: #c0392b; }} /* red */
+  #btn-left, #btn-right {{ background: #2980b9; }}   /* blue */
+  #btn-drop {{ background: #27ae60; }}   /* green */
+  #btn-rotate {{ background: #f1c40f; color: black; }} /* yellow */
+
+  #controls-left, #controls-right {{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }}
+
   #scoreBoard {{ font-size: 20px; margin-bottom: 5px; }}
+  #gameOver {{ display: none; color: red; font-size: 24px; margin-top: 10px; font-weight: bold; }}
 </style>
 
 <div id="scoreBoard">Score: 0 | Lines: 0</div>
-<canvas id="tetris" width="240" height="400"></canvas>
-<br>
-<div>
-  <button id="pauseBtn">⏯ Pause</button>
-  <button id="restartBtn">🔄 Restart</button>
-</div>
-<div id="gameOver">YOU LOSE 😵</div>
 
-<!-- Mobile controls -->
-<div id="controls">
-  <div>
-    <button onclick="playerRotate(1)">⟳ Rotate</button>
+<div id="game-wrapper">
+  <!-- Left controls -->
+  <div id="controls-left">
+    <button id="btn-left" onclick="playerMove(-1)">⬅</button>
+    <button id="btn-drop" onclick="playerDrop()">⬇</button>
+    <button id="btn-right" onclick="playerMove(1)">➡</button>
   </div>
-  <div>
-    <button onclick="playerMove(-1)">⬅</button>
-    <button onclick="playerDrop()">⬇</button>
-    <button onclick="playerMove(1)">➡</button>
+
+  <!-- Game canvas -->
+  <canvas id="tetris" width="240" height="400"></canvas>
+
+  <!-- Right controls -->
+  <div id="controls-right">
+    <button id="btn-rotate" onclick="playerRotate(1)">⟳</button>
+    <button id="pauseBtn">⏯</button>
+    <button id="restartBtn">🔄</button>
   </div>
 </div>
+
+<div id="gameOver">YOU LOSE 😵</div>
 
 <script>
 const canvas = document.getElementById('tetris');
@@ -94,7 +125,7 @@ function updateScore() {{
 function togglePause() {{
     if (gameOver) return;
     paused = !paused;
-    document.getElementById("pauseBtn").innerText = paused ? "▶ Resume" : "⏯ Pause";
+    document.getElementById("pauseBtn").innerText = paused ? "▶" : "⏯";
 }}
 
 function restartGame() {{
@@ -106,7 +137,7 @@ function restartGame() {{
     lines = 0;
     updateScore();
     document.getElementById("gameOver").style.display = "none";
-    document.getElementById("pauseBtn").innerText = "⏯ Pause";
+    document.getElementById("pauseBtn").innerText = "⏯";
 }}
 
 document.getElementById("pauseBtn").addEventListener("click", togglePause);
@@ -308,4 +339,5 @@ update();
 </script>
 """
 
-st.components.v1.html(html_code, height=800)
+st.components.v1.html(html_code, height=600)
+ 
