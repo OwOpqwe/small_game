@@ -14,17 +14,10 @@ st.markdown("""
 - Restart: `R`  
 
 **Instructions (Mobile):**  
-- **Swipe Left / Right** → Move  
-- **Swipe Down** → Drop  
+- **Drag Left / Right** → Move  
+- **Drag Down** → Drop faster  
 - **Tap** → Rotate  
 - Or use on-screen buttons  
-
-**Difficulty levels:**  
-- Easy → slow blocks  
-- Normal → medium speed  
-- Hard → faster  
-- Demon → very fast  
-- Impossible → extremely fast (almost instant!)  
 
 **Goal:** Clear lines to earn points. The game ends if blocks reach the top.
 """)
@@ -34,15 +27,14 @@ difficulty = st.selectbox("Choose Difficulty", ["Easy", "Normal", "Hard", "Demon
 
 # Drop intervals in milliseconds
 difficulty_speeds = {
-    "Easy": 1000,      
-    "Normal": 600,     
-    "Hard": 300,       
-    "Demon": 100,      
-    "Impossible": 0.001   # Almost instant
+    "Easy": 1000,
+    "Normal": 600,
+    "Hard": 300,
+    "Demon": 100,
+    "Impossible": 0.001
 }
 drop_speed = difficulty_speeds[difficulty]
 
-# Full HTML + JS code
 html_code = f"""
 <style>
   body {{ background: #111; color: #fff; font-family: monospace; text-align: center; }}
@@ -73,7 +65,7 @@ html_code = f"""
 </div>
 <div id="gameOver">YOU LOSE 😵</div>
 
-<!-- On-screen controls -->
+<!-- On-screen buttons -->
 <div id="controls">
   <div>
     <button onclick="playerRotate(1)">⟳</button>
@@ -305,34 +297,43 @@ document.addEventListener('keydown', event => {{
     else if (event.key === 'w' || event.key === 'W') playerRotate(1);
 }});
 
-// Touchscreen swipe & tap
-let touchStartX = 0;
-let touchStartY = 0;
-let touchEndX = 0;
-let touchEndY = 0;
+// Touch drag + tap
+let dragStartX = 0;
+let dragStartY = 0;
+let isDragging = false;
 
 canvas.addEventListener("touchstart", (e) => {{
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
+    dragStartX = e.touches[0].clientX;
+    dragStartY = e.touches[0].clientY;
+    isDragging = true;
+}}, false);
+
+canvas.addEventListener("touchmove", (e) => {{
+    if (!isDragging) return;
+    let currentX = e.touches[0].clientX;
+    let currentY = e.touches[0].clientY;
+
+    let dx = currentX - dragStartX;
+    let dy = currentY - dragStartY;
+
+    if (Math.abs(dx) > 15) {{
+        if (dx > 0) playerMove(1);
+        else playerMove(-1);
+        dragStartX = currentX;
+    }}
+
+    if (dy > 20) {{
+        playerDrop();
+        dragStartY = currentY;
+    }}
 }}, false);
 
 canvas.addEventListener("touchend", (e) => {{
-    touchEndX = e.changedTouches[0].clientX;
-    touchEndY = e.changedTouches[0].clientY;
-
-    let dx = touchEndX - touchStartX;
-    let dy = touchEndY - touchStartY;
-
-    if (Math.abs(dx) > Math.abs(dy)) {{
-        // Horizontal swipe
-        if (dx > 30) playerMove(1);   // right
-        else if (dx < -30) playerMove(-1); // left
-    }} else {{
-        // Vertical or tap
-        if (dy > 30) playerDrop();   // swipe down
-        else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {{
-            playerRotate(1); // tap = rotate
-        }}
+    isDragging = false;
+    let dx = e.changedTouches[0].clientX - dragStartX;
+    let dy = e.changedTouches[0].clientY - dragStartY;
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {{
+        playerRotate(1);
     }}
 }}, false);
 
