@@ -4,7 +4,7 @@ st.set_page_config(layout="centered")
 st.title("Tetris")
 
 st.markdown("""
-**Instructions:**  
+**Instructions:** 
 - Move Left: `A` (or swipe/drag left)  
 - Move Right: `D` (or swipe/drag right)  
 - Soft Drop: `S` (or drag down)  
